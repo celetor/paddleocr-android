@@ -6,4 +6,9 @@
 /build
 /captures
 .externalNativeBuild
-
+/app/.cxx/
+/app/cache/
+/app/OpenCV/
+/app/PaddleLite/
+/app/src/main/assets/labels/
+/app/src/main/assets/models/
