@@ -10,6 +10,7 @@ import android.graphics.Point;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +37,7 @@ public class Predictor {
     protected Bitmap inputImage = null;
     protected Bitmap outputImage = null;
     protected volatile String outputResult = "";
+    protected volatile ArrayList<OcrResultModel> outputResultList = new ArrayList<>();
     protected float postprocessTime = 0;
 
 
@@ -86,8 +88,8 @@ public class Predictor {
         config.useOpencl = useOpencl;
         config.cpuThreadNum = cpuThreadNum;
         config.cpuPower = cpuPowerMode;
-        config.detModelFilename = realPath + File.separator + "det_db.nb";
-        config.recModelFilename = realPath + File.separator + "rec_crnn.nb";
+        config.detModelFilename = realPath + File.separator + "det.nb";
+        config.recModelFilename = realPath + File.separator + "rec.nb";
         config.clsModelFilename = realPath + File.separator + "cls.nb";
         Log.i("Predictor", "model path" + config.detModelFilename + " ; " + config.recModelFilename + ";" + config.clsModelFilename);
         paddlePredictor = new OCRPredictorNative(config);
@@ -116,7 +118,16 @@ public class Predictor {
         wordLabels.add("black");
         // Load word labels from file
         try {
-            InputStream assetsInputStream = appCtx.getAssets().open(labelPath);
+            String realPath = labelPath;
+            if (!labelPath.substring(0, 1).equals("/")) {
+                // Read model files from custom path if the first character of mode path is '/'
+                // otherwise copy model to cache from assets
+                realPath = appCtx.getCacheDir() + "/" + labelPath;
+                Utils.copyDirectoryFromAssets(appCtx, labelPath, realPath);
+            }
+            realPath = realPath + File.separator + "ppocr_keys_v1.txt";
+            InputStream assetsInputStream = new FileInputStream(realPath);
+            //InputStream assetsInputStream = appCtx.getAssets().open(labelPath);
             int available = assetsInputStream.available();
             byte[] lines = new byte[available];
             assetsInputStream.read(lines);
@@ -229,17 +240,17 @@ public class Predictor {
         for (int i = 0; i < results.size(); i++) {
             OcrResultModel result = results.get(i);
             StringBuilder sb = new StringBuilder("");
-            if(result.getPoints().size()>0){
+            if (result.getPoints().size() > 0) {
                 sb.append("Det: ");
                 for (Point p : result.getPoints()) {
                     sb.append("(").append(p.x).append(",").append(p.y).append(") ");
                 }
             }
-            if(result.getLabel().length() > 0){
+            if (result.getLabel().length() > 0) {
                 sb.append("\n Rec: ").append(result.getLabel());
                 sb.append(",").append(result.getConfidence());
             }
-            if(result.getClsIdx()!=-1){
+            if (result.getClsIdx() != -1) {
                 sb.append(" Cls: ").append(result.getClsLabel());
                 sb.append(",").append(result.getClsConfidence());
             }
@@ -259,10 +270,12 @@ public class Predictor {
         paint.setStrokeWidth(5);
         paint.setStyle(Paint.Style.STROKE);
 
+        outputResultList = results;
+
         for (OcrResultModel result : results) {
             Path path = new Path();
             List<Point> points = result.getPoints();
-            if(points.size()==0){
+            if (points.size() == 0) {
                 continue;
             }
             path.moveTo(points.get(0).x, points.get(0).y);
