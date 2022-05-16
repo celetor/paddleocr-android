@@ -33,6 +33,9 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+        <meta-data
+            android:name="org.autojs.plugin.sdk.registry"
+            android:value="com.baidu.paddle.lite.demo.ocr.OCRPluginRegistry" />
     </application>
 
 </manifest>

@@ -36,6 +36,7 @@ public class Predictor {
     protected Bitmap inputImage = null;
     protected Bitmap outputImage = null;
     protected volatile String outputResult = "";
+    protected volatile ArrayList<OcrResultModel> outputResultList = new ArrayList<>();
     protected float postprocessTime = 0;
 
 
@@ -153,6 +154,7 @@ public class Predictor {
         inferenceTime = (end.getTime() - start.getTime()) / (float) inferIterNum;
 
         results = postprocess(results);
+        outputResultList = results;
         Log.i(TAG, "[stat] Inference Time: " + inferenceTime + " ;Box Size " + results.size());
         drawResults(results);
 
